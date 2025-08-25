@@ -1,0 +1,30 @@
+{
+  "name": "banking-poc-api",
+  "version": "1.0.0",
+  "description": "This is the banking api endpoint for a POC which will be connected to MCP servers allowing AI to actuate task based on users input.",
+  "keywords": [
+    "Node",
+    "JS",
+    "Oracle",
+    "19c",
+    "Banking",
+    "POC",
+    "EndPoint"
+  ],
+  "license": "ISC",
+  "author": "Siddhartha Mukherjee",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10",
+    "oracledb": "^6.9.0"
+  }
+}
