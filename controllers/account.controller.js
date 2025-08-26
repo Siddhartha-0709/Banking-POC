@@ -78,11 +78,15 @@ const updateAccount = async (req, res) => {
 
     const result = await connection.execute(
       `UPDATE xxkpmg_accounts_tbl_bnk
-          SET account_type = NVL(:account_type, account_type),
-              status       = NVL(:status, status),
+          SET account_type = NVL(:ACCOUNT_TYPE, account_type),
+              status       = NVL(:STATUS, status),
               updated_at   = SYSTIMESTAMP
-        WHERE account_id = :id`,
-      { account_type, status, id },
+        WHERE account_id = :ID`,
+      {
+        ACCOUNT_TYPE: account_type || null,
+        STATUS: status || null,
+        ID: id,
+      },
       { autoCommit: true }
     );
 
