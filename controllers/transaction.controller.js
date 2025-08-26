@@ -193,7 +193,7 @@ const getTransactionHistory = async (req, res) => {
     connection = await db.getConnection();
 
     const result = await connection.execute(
-      `SELECT transaction_id, account_id, transaction_type, amount, related_account, status, created_at
+      `SELECT transaction_id, account_id, type, amount, description, created_at
          FROM xxkpmg_transactions_tbl_bnk 
         WHERE account_id = :account_id
         ORDER BY created_at DESC`,
