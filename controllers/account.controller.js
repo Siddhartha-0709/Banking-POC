@@ -75,7 +75,8 @@ const updateAccount = async (req, res) => {
     const { id } = req.query;
     const { account_type, status } = req.body;
     connection = await db.getConnection();
-
+    console.log("Updating account:", id, account_type, status);
+    
     const result = await connection.execute(
       `UPDATE xxkpmg_accounts_tbl_bnk
           SET account_type = NVL(:ACCOUNT_TYPE, account_type),
