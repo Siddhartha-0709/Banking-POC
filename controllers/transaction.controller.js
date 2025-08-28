@@ -15,14 +15,6 @@ const deposit = async (req, res) => {
 
     connection = await db.getConnection();
 
-    // Generate transaction_id
-    const txnSeq = await connection.execute(
-      `SELECT xxkpmg_transactions_seq.NEXTVAL AS txn_id FROM dual`,
-      [],
-      { outFormat: oracledb.OUT_FORMAT_OBJECT }
-    );
-    const transaction_id = txnSeq.rows[0].TXN_ID;
-
     // Update balance
     await connection.execute(
       `UPDATE xxkpmg_accounts_tbl_bnk
@@ -33,12 +25,13 @@ const deposit = async (req, res) => {
       { autoCommit: false }
     );
 
-    // Record transaction
-    await connection.execute(
+    // Record transaction using sequence
+    const result = await connection.execute(
       `INSERT INTO xxkpmg_transactions_tbl_bnk 
          (transaction_id, account_id, transaction_type, amount, status)
-       VALUES (:txn_id, :account_id, 'DEPOSIT', :amount, 'SUCCESS')`,
-      { txn_id: transaction_id, account_id, amount },
+       VALUES (xxkpmg_transactions_seq.NEXTVAL, :account_id, 'DEPOSIT', :amount, 'SUCCESS')
+       RETURNING transaction_id INTO :txn_id`,
+      { account_id, amount, txn_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
       { autoCommit: false }
     );
 
@@ -46,7 +39,7 @@ const deposit = async (req, res) => {
 
     res.json({ 
       message: "Deposit successful", 
-      transaction_id,
+      transaction_id: result.outBinds.txn_id[0],
       account_id, 
       amount 
     });
@@ -89,14 +82,6 @@ const withdraw = async (req, res) => {
       return res.status(400).json({ error: "Insufficient funds" });
     }
 
-    // Generate transaction_id
-    const txnSeq = await connection.execute(
-      `SELECT xxkpmg_transactions_seq.NEXTVAL AS txn_id FROM dual`,
-      [],
-      { outFormat: oracledb.OUT_FORMAT_OBJECT }
-    );
-    const transaction_id = txnSeq.rows[0].TXN_ID;
-
     // Update balance
     await connection.execute(
       `UPDATE xxkpmg_accounts_tbl_bnk
@@ -108,11 +93,12 @@ const withdraw = async (req, res) => {
     );
 
     // Record transaction
-    await connection.execute(
+    const txnResult = await connection.execute(
       `INSERT INTO xxkpmg_transactions_tbl_bnk 
          (transaction_id, account_id, transaction_type, amount, status)
-       VALUES (:txn_id, :account_id, 'WITHDRAW', :amount, 'SUCCESS')`,
-      { txn_id: transaction_id, account_id, amount },
+       VALUES (xxkpmg_transactions_seq.NEXTVAL, :account_id, 'WITHDRAW', :amount, 'SUCCESS')
+       RETURNING transaction_id INTO :txn_id`,
+      { account_id, amount, txn_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
       { autoCommit: false }
     );
 
@@ -120,7 +106,7 @@ const withdraw = async (req, res) => {
 
     res.json({ 
       message: "Withdrawal successful", 
-      transaction_id,
+      transaction_id: txnResult.outBinds.txn_id[0],
       account_id, 
       amount 
     });
@@ -163,14 +149,6 @@ const transfer = async (req, res) => {
       return res.status(400).json({ error: "Insufficient funds or invalid source account" });
     }
 
-    // Generate a single transaction_id for this transfer
-    const txnSeq = await connection.execute(
-      `SELECT xxkpmg_transactions_seq.NEXTVAL AS txn_id FROM dual`,
-      [],
-      { outFormat: oracledb.OUT_FORMAT_OBJECT }
-    );
-    const transaction_id = txnSeq.rows[0].TXN_ID;
-
     // Debit sender
     await connection.execute(
       `UPDATE xxkpmg_accounts_tbl_bnk
@@ -193,17 +171,18 @@ const transfer = async (req, res) => {
     await connection.execute(
       `INSERT INTO xxkpmg_transactions_tbl_bnk 
          (transaction_id, account_id, transaction_type, amount, related_account, status)
-       VALUES (:txn_id, :from_id, 'TRANSFER_OUT', :amount, :to_id, 'SUCCESS')`,
-      { txn_id: transaction_id, from_id: from_account_id, amount, to_id: to_account_id },
+       VALUES (xxkpmg_transactions_seq.NEXTVAL, :from_id, 'TRANSFER_OUT', :amount, :to_id, 'SUCCESS')`,
+      { from_id: from_account_id, amount, to_id: to_account_id },
       { autoCommit: false }
     );
 
     // Record transfer in
-    await connection.execute(
+    const txnResult = await connection.execute(
       `INSERT INTO xxkpmg_transactions_tbl_bnk 
          (transaction_id, account_id, transaction_type, amount, related_account, status)
-       VALUES (:txn_id, :to_id, 'TRANSFER_IN', :amount, :from_id, 'SUCCESS')`,
-      { txn_id: transaction_id, to_id: to_account_id, amount, from_id: from_account_id },
+       VALUES (xxkpmg_transactions_seq.NEXTVAL, :to_id, 'TRANSFER_IN', :amount, :from_id, 'SUCCESS')
+       RETURNING transaction_id INTO :txn_id`,
+      { to_id: to_account_id, amount, from_id: from_account_id, txn_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER } },
       { autoCommit: false }
     );
 
@@ -211,7 +190,7 @@ const transfer = async (req, res) => {
 
     res.json({
       message: "Transfer successful",
-      transaction_id,
+      transaction_id: txnResult.outBinds.txn_id[0],
       from_account_id,
       to_account_id,
       amount,
@@ -236,7 +215,7 @@ const getTransactionHistory = async (req, res) => {
     connection = await db.getConnection();
 
     const result = await connection.execute(
-      `SELECT transaction_id, account_id, type, amount, description, created_at
+      `SELECT transaction_id, account_id, transaction_type, amount, description, created_at, related_account, status
          FROM xxkpmg_transactions_tbl_bnk 
         WHERE account_id = :account_id
         ORDER BY created_at DESC`,
