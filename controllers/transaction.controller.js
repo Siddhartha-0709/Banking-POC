@@ -15,6 +15,15 @@ const deposit = async (req, res) => {
 
     connection = await db.getConnection();
 
+    // Generate transaction_id
+    const txnSeq = await connection.execute(
+      `SELECT xxkpmg_transactions_seq.NEXTVAL AS txn_id FROM dual`,
+      [],
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    const transaction_id = txnSeq.rows[0].TXN_ID;
+
+    // Update balance
     await connection.execute(
       `UPDATE xxkpmg_accounts_tbl_bnk
          SET balance = balance + :amount,
@@ -24,17 +33,23 @@ const deposit = async (req, res) => {
       { autoCommit: false }
     );
 
+    // Record transaction
     await connection.execute(
       `INSERT INTO xxkpmg_transactions_tbl_bnk 
-         (account_id, transaction_type, amount, status)
-       VALUES (:account_id, 'DEPOSIT', :amount, 'SUCCESS')`,
-      { account_id, amount },
+         (transaction_id, account_id, transaction_type, amount, status)
+       VALUES (:txn_id, :account_id, 'DEPOSIT', :amount, 'SUCCESS')`,
+      { txn_id: transaction_id, account_id, amount },
       { autoCommit: false }
     );
 
     await connection.commit();
 
-    res.json({ message: "Deposit successful", account_id, amount });
+    res.json({ 
+      message: "Deposit successful", 
+      transaction_id,
+      account_id, 
+      amount 
+    });
   } catch (err) {
     console.error("Error in deposit:", err);
     if (connection) await connection.rollback();
@@ -43,6 +58,7 @@ const deposit = async (req, res) => {
     if (connection) await connection.close();
   }
 };
+
 
 /**
  * Withdraw money from an account
@@ -73,6 +89,15 @@ const withdraw = async (req, res) => {
       return res.status(400).json({ error: "Insufficient funds" });
     }
 
+    // Generate transaction_id
+    const txnSeq = await connection.execute(
+      `SELECT xxkpmg_transactions_seq.NEXTVAL AS txn_id FROM dual`,
+      [],
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    const transaction_id = txnSeq.rows[0].TXN_ID;
+
+    // Update balance
     await connection.execute(
       `UPDATE xxkpmg_accounts_tbl_bnk
          SET balance = balance - :amount,
@@ -82,17 +107,23 @@ const withdraw = async (req, res) => {
       { autoCommit: false }
     );
 
+    // Record transaction
     await connection.execute(
       `INSERT INTO xxkpmg_transactions_tbl_bnk 
-         (account_id, transaction_type, amount, status)
-       VALUES (:account_id, 'WITHDRAW', :amount, 'SUCCESS')`,
-      { account_id, amount },
+         (transaction_id, account_id, transaction_type, amount, status)
+       VALUES (:txn_id, :account_id, 'WITHDRAW', :amount, 'SUCCESS')`,
+      { txn_id: transaction_id, account_id, amount },
       { autoCommit: false }
     );
 
     await connection.commit();
 
-    res.json({ message: "Withdrawal successful", account_id, amount });
+    res.json({ 
+      message: "Withdrawal successful", 
+      transaction_id,
+      account_id, 
+      amount 
+    });
   } catch (err) {
     console.error("Error in withdrawal:", err);
     if (connection) await connection.rollback();
@@ -101,6 +132,7 @@ const withdraw = async (req, res) => {
     if (connection) await connection.close();
   }
 };
+
 
 /**
  * Transfer money between accounts
@@ -131,6 +163,14 @@ const transfer = async (req, res) => {
       return res.status(400).json({ error: "Insufficient funds or invalid source account" });
     }
 
+    // Generate a single transaction_id for this transfer
+    const txnSeq = await connection.execute(
+      `SELECT xxkpmg_transactions_seq.NEXTVAL AS txn_id FROM dual`,
+      [],
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+    const transaction_id = txnSeq.rows[0].TXN_ID;
+
     // Debit sender
     await connection.execute(
       `UPDATE xxkpmg_accounts_tbl_bnk
@@ -149,20 +189,21 @@ const transfer = async (req, res) => {
       { autoCommit: false }
     );
 
-    // Record transaction
+    // Record transfer out
     await connection.execute(
       `INSERT INTO xxkpmg_transactions_tbl_bnk 
-         (account_id, transaction_type, amount, related_account, status)
-       VALUES (:from_id, 'TRANSFER_OUT', :amount, :to_id, 'SUCCESS')`,
-      { from_id: from_account_id, amount, to_id: to_account_id },
+         (transaction_id, account_id, transaction_type, amount, related_account, status)
+       VALUES (:txn_id, :from_id, 'TRANSFER_OUT', :amount, :to_id, 'SUCCESS')`,
+      { txn_id: transaction_id, from_id: from_account_id, amount, to_id: to_account_id },
       { autoCommit: false }
     );
 
+    // Record transfer in
     await connection.execute(
       `INSERT INTO xxkpmg_transactions_tbl_bnk 
-         (account_id, transaction_type, amount, related_account, status)
-       VALUES (:to_id, 'TRANSFER_IN', :amount, :from_id, 'SUCCESS')`,
-      { to_id: to_account_id, amount, from_id: from_account_id },
+         (transaction_id, account_id, transaction_type, amount, related_account, status)
+       VALUES (:txn_id, :to_id, 'TRANSFER_IN', :amount, :from_id, 'SUCCESS')`,
+      { txn_id: transaction_id, to_id: to_account_id, amount, from_id: from_account_id },
       { autoCommit: false }
     );
 
@@ -170,6 +211,7 @@ const transfer = async (req, res) => {
 
     res.json({
       message: "Transfer successful",
+      transaction_id,
       from_account_id,
       to_account_id,
       amount,
@@ -182,6 +224,7 @@ const transfer = async (req, res) => {
     if (connection) await connection.close();
   }
 };
+
 
 /**
  * Get transaction history by account
