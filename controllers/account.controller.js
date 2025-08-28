@@ -46,10 +46,23 @@ const getAccountById = async (req, res) => {
     connection = await db.getConnection();
 
     const result = await connection.execute(
-      `SELECT account_id, customer_id, account_type, balance, status, created_at
-         FROM xxkpmg_accounts_tbl_bnk 
-        WHERE account_id = :id`,
-      [id],
+      `SELECT c.customer_id,
+              c.full_name,
+              c.email,
+              c.phone,
+              c.address,
+              a.account_id,
+              a.IFSC_code,
+              a.branch_name,
+              a.account_type,
+              a.balance,
+              a.status,
+              a.created_at
+         FROM xxkpmg_customers_tbl_bnk c,
+              xxkpmg_accounts_tbl_bnk a
+        WHERE c.customer_id = a.customer_id
+          AND c.customer_id = :id`,
+      { id: id }, // ✅ bind variable
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
 
