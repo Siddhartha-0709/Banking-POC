@@ -126,6 +126,8 @@ const withdraw = async (req, res) => {
 const transfer = async (req, res) => {
   let connection;
   try {
+    console.log("Transfer request body:", req.body);
+    
     const { from_account_id, to_account_id, amount } = req.body;
 
     if (!amount || amount <= 0) {

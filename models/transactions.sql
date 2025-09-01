@@ -12,3 +12,15 @@ CREATE TABLE xxkpmg_transactions_tbl_bnk (
 
 -- Create sequence for transaction_id
 CREATE SEQUENCE xxkpmg_transactions_seq START WITH 1000 INCREMENT BY 1 NOCACHE;
+
+
+select * from xxkpmg_transactions_tbl_bnk;
+
+TRUNCATE TABLE xxkpmg_transactions_tbl_bnk;
+
+SELECT * FROM xxkpmg_accounts_tbl_bnk;
+
+UPDATE xxkpmg_accounts_tbl_bnk SET balance = 50500 WHERE account_id = 4;
+commit;
+
+SELECT * FROM xxkpmg_accounts_tbl_bnk;

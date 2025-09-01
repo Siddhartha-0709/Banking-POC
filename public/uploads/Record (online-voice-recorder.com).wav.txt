@@ -1,0 +1,5 @@
+ Hi, I am Siddharth. You are my banking assistant. Can you please help me by telling my account
+ details and also I would like to know about my account balance, my past transactions and
+ few other details of my account? Like is there any loan account associated with my customer
+ ID or any fixed deposit and also tell me about the loan rates that your bank has to offer
+ me. Can you do this pretty thing for me?

@@ -1,0 +1,87 @@
+{
+	"systeminfo": "WHISPER : COREML = 0 | OPENVINO = 0 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | OPENMP = 1 | AARCH64_REPACK = 1 | ",
+	"model": {
+		"type": "base",
+		"multilingual": false,
+		"vocab": 51864,
+		"audio": {
+			"ctx": 1500,
+			"state": 512,
+			"head": 8,
+			"layer": 6
+		},
+		"text": {
+			"ctx": 448,
+			"state": 512,
+			"head": 8,
+			"layer": 6
+		},
+		"mels": 80,
+		"ftype": 1
+	},
+	"params": {
+		"model": "./models/ggml-base.en.bin",
+		"language": "en",
+		"translate": false
+	},
+	"result": {
+		"language": "en"
+	},
+	"transcription": [
+		{
+			"timestamps": {
+				"from": "00:00:00,000",
+				"to": "00:00:06,920"
+			},
+			"offsets": {
+				"from": 0,
+				"to": 6920
+			},
+			"text": " Hi, I am Siddharth. You are my banking assistant. Can you please help me by telling my account"
+		},
+		{
+			"timestamps": {
+				"from": "00:00:06,920",
+				"to": "00:00:14,860"
+			},
+			"offsets": {
+				"from": 6920,
+				"to": 14860
+			},
+			"text": " details and also I would like to know about my account balance, my past transactions and"
+		},
+		{
+			"timestamps": {
+				"from": "00:00:14,860",
+				"to": "00:00:21,580"
+			},
+			"offsets": {
+				"from": 14860,
+				"to": 21580
+			},
+			"text": " few other details of my account? Like is there any loan account associated with my customer"
+		},
+		{
+			"timestamps": {
+				"from": "00:00:21,580",
+				"to": "00:00:28,340"
+			},
+			"offsets": {
+				"from": 21580,
+				"to": 28340
+			},
+			"text": " ID or any fixed deposit and also tell me about the loan rates that your bank has to offer"
+		},
+		{
+			"timestamps": {
+				"from": "00:00:28,340",
+				"to": "00:00:31,020"
+			},
+			"offsets": {
+				"from": 28340,
+				"to": 31020
+			},
+			"text": " me. Can you do this pretty thing for me?"
+		}
+	]
+}
