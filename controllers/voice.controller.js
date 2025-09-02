@@ -12,8 +12,8 @@ const getSpeechToText = async (req, res) => {
             return res.status(400).json({ success: false, message: "No file uploaded" });
         }
 
-        // ✅ Use multer's absolute path instead of rebuilding
-        const filePath = req.file.path;
+        // ✅ Make absolute path always
+        const filePath = path.resolve(req.file.path);
 
         // Ensure file exists
         await fs.promises.access(filePath, fs.constants.R_OK);
