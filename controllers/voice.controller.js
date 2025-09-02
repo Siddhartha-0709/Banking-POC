@@ -1,5 +1,10 @@
 import fs from "fs";
+import path from "path";   // ✅ you forgot this
+import { nodewhisper } from "nodejs-whisper";
+import { fileURLToPath } from "url";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const getSpeechToText = async (req, res) => {
     try {
         if (!req.file) {
